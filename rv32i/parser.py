@@ -11,7 +11,7 @@ import re
 
 from .isa import (
     TABLA_ISA, NOMBRES_ABI, SOPORTADAS,
-    SINTAXIS_R, SINTAXIS_I_ARIT, SINTAXIS_I_LOAD, SINTAXIS_S,
+    SINTAXIS_R, SINTAXIS_I_ARIT, SINTAXIS_I_LOAD, SINTAXIS_S, SINTAXIS_B,
 )
 
 
@@ -119,13 +119,21 @@ def parsear_inmediato(token):
 
 def _verificar_rango(definicion, valor):
     """Valida el inmediato contra el rango que permite el formato."""
-    from .isa import (FORMATO_I, FORMATO_S,
-                      IMM_I_MIN, IMM_I_MAX, IMM_S_MIN, IMM_S_MAX)
+    from .isa import (FORMATO_I, FORMATO_S, FORMATO_B,
+                      IMM_I_MIN, IMM_I_MAX, IMM_S_MIN, IMM_S_MAX,
+                      IMM_B_MIN, IMM_B_MAX)
 
     if definicion.formato == FORMATO_I:
         minimo, maximo, bits = IMM_I_MIN, IMM_I_MAX, 12
     elif definicion.formato == FORMATO_S:
         minimo, maximo, bits = IMM_S_MIN, IMM_S_MAX, 12
+    elif definicion.formato == FORMATO_B:
+        minimo, maximo, bits = IMM_B_MIN, IMM_B_MAX, 13
+        if valor % 2 != 0:
+            raise ErrorInstruccion(
+                f"el desplazamiento de '{definicion.mnemonico}' debe ser par: "
+                f"{valor} no lo es. En formato B el bit 0 es implícitamente 0, "
+                "por lo que solo se pueden codificar desplazamientos pares.")
     else:
         return
 
@@ -206,6 +214,15 @@ def parsear(texto):
                          f"{mnemonico} rs2, desplazamiento(rs1)")
         rs2 = parsear_registro(operandos[0])
         imm, rs1 = _parsear_offset(operandos[1])
+        _verificar_rango(definicion, imm)
+        return InstruccionParseada(definicion, limpio, rs1=rs1, rs2=rs2, imm=imm)
+
+    if sintaxis == SINTAXIS_B:
+        _exigir_cantidad(mnemonico, operandos, 3,
+                         f"{mnemonico} rs1, rs2, desplazamiento")
+        rs1 = parsear_registro(operandos[0])
+        rs2 = parsear_registro(operandos[1])
+        imm = parsear_inmediato(operandos[2])
         _verificar_rango(definicion, imm)
         return InstruccionParseada(definicion, limpio, rs1=rs1, rs2=rs2, imm=imm)
 

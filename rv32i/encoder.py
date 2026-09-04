@@ -7,7 +7,7 @@ es la única fuente de verdad para el desglose visual: el explicador no
 vuelve a calcular posiciones, solo las presenta. Así es imposible que la
 codificación y la explicación se contradigan.
 """
-from .isa import FORMATO_R, FORMATO_I, FORMATO_S
+from .isa import FORMATO_R, FORMATO_I, FORMATO_S, FORMATO_B
 from .parser import ErrorInstruccion, parsear
 
 
@@ -149,10 +149,47 @@ def _codificar_s(p):
     return _ensamblar(campos), campos
 
 
+def _codificar_b(p):
+    d = p.definicion
+    imm13 = _a_complemento_dos(p.imm, 13)
+
+    bit12 = (imm13 >> 12) & 0x1
+    bits10_5 = (imm13 >> 5) & 0x3F
+    bits4_1 = (imm13 >> 1) & 0xF
+    bit11 = (imm13 >> 11) & 0x1
+
+    alto = (bit12 << 6) | bits10_5     # bits 31:25
+    bajo = (bits4_1 << 1) | bit11      # bits 11:7
+
+    campos = [
+        Campo("imm[12|10:5]", 31, 25, alto,
+              f"Bit de signo del desplazamiento (imm[12] = {bit12}) seguido de "
+              f"imm[10:5] = {format(bits10_5, '06b')}. El desplazamiento "
+              f"completo es {p.imm} bytes respecto al PC de esta instrucción."),
+        Campo("rs2", 24, 20, p.rs2,
+              f"Segundo registro a comparar: x{p.rs2}."),
+        Campo("rs1", 19, 15, p.rs1,
+              f"Primer registro a comparar: x{p.rs1}."),
+        Campo("funct3", 14, 12, d.funct3,
+              f"Selector de la condición de salto dentro del opcode 1100011: "
+              f"identifica '{d.mnemonico}' ({d.descripcion})."),
+        Campo("imm[4:1|11]", 11, 7, bajo,
+              f"imm[4:1] = {format(bits4_1, '04b')} seguido de imm[11] = "
+              f"{bit11}. El bit 0 del desplazamiento no se codifica: siempre "
+              f"vale 0 porque las instrucciones están alineadas a 2 bytes, lo "
+              f"que duplica el alcance del salto a ±4 KiB."),
+        Campo("opcode", 6, 0, d.opcode,
+              "Identifica la familia de saltos condicionales (BRANCH) y, con "
+              "ello, el formato B."),
+    ]
+    return _ensamblar(campos), campos
+
+
 _DESPACHO = {
     FORMATO_R: _codificar_r,
     FORMATO_I: _codificar_i,
     FORMATO_S: _codificar_s,
+    FORMATO_B: _codificar_b,
 }
 
 

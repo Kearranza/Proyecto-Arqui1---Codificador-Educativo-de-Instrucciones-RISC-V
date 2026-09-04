@@ -6,10 +6,11 @@ Fuente de los valores de opcode / funct3 / funct7:
     "The RISC-V Instruction Set Manual, Volume I: Unprivileged ISA",
     Document Version 20191213, RISC-V Foundation, diciembre 2019.
     - Capítulo 2 "RV32I Base Integer Instruction Set", sección 2.2
-      ("Base Instruction Formats") para la disposición de campos R/I/S.
+      ("Base Instruction Formats") para la disposición de campos R/I/S/B.
     - Sección 2.4 ("Integer Computational Instructions") para add, sub,
       and, or, addi, andi.
     - Sección 2.6 ("Load and Store Instructions") para lw, lb, sw, sb.
+    - Sección 2.5 ("Control Transfer Instructions") para beq, bne.
     - Capítulo 24 ("RV32/64G Instruction Set Listings"), tabla de opcodes,
       usada como verificación cruzada de los valores anteriores.
 
@@ -22,21 +23,25 @@ OPCODE_OP = 0b0110011      # Aritmética registro-registro (formato R)
 OPCODE_OP_IMM = 0b0010011  # Aritmética con inmediato (formato I)
 OPCODE_LOAD = 0b0000011    # Cargas desde memoria (formato I)
 OPCODE_STORE = 0b0100011   # Almacenamientos en memoria (formato S)
+OPCODE_BRANCH = 0b1100011  # Saltos condicionales (formato B)
 
 # --- Formatos ---------------------------------------------------------------
 FORMATO_R = "R"
 FORMATO_I = "I"
 FORMATO_S = "S"
+FORMATO_B = "B"
 
 # Sintaxis de operandos que acepta el parser para cada instrucción:
 #   "rd_rs1_rs2"  ->  op rd, rs1, rs2          (add x5, x6, x7)
 #   "rd_rs1_imm"  ->  op rd, rs1, imm          (addi x5, x6, -12)
 #   "rd_off_rs1"  ->  op rd, imm(rs1)          (lw x5, 8(x6))
 #   "rs2_off_rs1" ->  op rs2, imm(rs1)         (sw x8, -4(x2))
+#   "rs1_rs2_imm" ->  op rs1, rs2, imm         (beq x1, x2, 8)
 SINTAXIS_R = "rd_rs1_rs2"
 SINTAXIS_I_ARIT = "rd_rs1_imm"
 SINTAXIS_I_LOAD = "rd_off_rs1"
 SINTAXIS_S = "rs2_off_rs1"
+SINTAXIS_B = "rs1_rs2_imm"
 
 
 class DefInstruccion:
@@ -94,6 +99,14 @@ TABLA_ISA = {
     "sw": DefInstruccion("sw", FORMATO_S, OPCODE_STORE, 0b010, None,
                          SINTAXIS_S,
                          "almacena en memoria la palabra de 32 bits de un registro"),
+
+    # Saltos condicionales — formato B, opcode 1100011
+    "beq": DefInstruccion("beq", FORMATO_B, OPCODE_BRANCH, 0b000, None,
+                          SINTAXIS_B,
+                          "salta si los dos registros son iguales"),
+    "bne": DefInstruccion("bne", FORMATO_B, OPCODE_BRANCH, 0b001, None,
+                          SINTAXIS_B,
+                          "salta si los dos registros son distintos"),
 }
 
 SOPORTADAS = list(TABLA_ISA.keys())
@@ -118,3 +131,5 @@ NOMBRES_ABI = {
 # I y S: inmediato de 12 bits con signo.
 IMM_I_MIN, IMM_I_MAX = -2048, 2047
 IMM_S_MIN, IMM_S_MAX = -2048, 2047
+# B: desplazamiento de 13 bits con signo, siempre par (el bit 0 es implícito).
+IMM_B_MIN, IMM_B_MAX = -4096, 4094

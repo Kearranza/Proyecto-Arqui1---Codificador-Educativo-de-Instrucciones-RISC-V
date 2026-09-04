@@ -8,7 +8,7 @@ de cada campo en esa instrucción concreta.
 """
 import textwrap
 
-from .isa import FORMATO_R, FORMATO_I, FORMATO_S
+from .isa import FORMATO_R, FORMATO_I, FORMATO_S, FORMATO_B
 
 ANCHO = 78
 
@@ -16,6 +16,7 @@ NOMBRE_FORMATO = {
     FORMATO_R: "R  (aritmética registro-registro)",
     FORMATO_I: "I  (operando inmediato de 12 bits)",
     FORMATO_S: "S  (almacenamiento en memoria)",
+    FORMATO_B: "B  (salto condicional)",
 }
 
 
@@ -90,6 +91,11 @@ def _resumen_semantico(p):
     if d.formato == FORMATO_S:
         ancho = "la palabra de 32 bits" if m == "sw" else "el byte bajo"
         return f"memoria[x{p.rs1} + ({p.imm})] <- {ancho} de x{p.rs2}"
+
+    if d.formato == FORMATO_B:
+        condicion = "==" if m == "beq" else "!="
+        return (f"si x{p.rs1} {condicion} x{p.rs2} entonces "
+                f"PC <- PC + {_operando_inmediato(p.imm)}")
 
     return ""
 
