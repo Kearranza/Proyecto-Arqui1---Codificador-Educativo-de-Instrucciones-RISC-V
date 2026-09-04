@@ -1,0 +1,6 @@
+# Bytecode de Python
+__pycache__/
+*.pyc
+
+# Material del curso ajeno a este proyecto
+tarea-02-encoding-ieee754.pdf
