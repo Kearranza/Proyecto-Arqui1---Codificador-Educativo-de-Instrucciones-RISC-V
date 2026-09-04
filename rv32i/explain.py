@@ -8,12 +8,14 @@ de cada campo en esa instrucción concreta.
 """
 import textwrap
 
-from .isa import FORMATO_R
+from .isa import FORMATO_R, FORMATO_I, FORMATO_S
 
 ANCHO = 78
 
 NOMBRE_FORMATO = {
     FORMATO_R: "R  (aritmética registro-registro)",
+    FORMATO_I: "I  (operando inmediato de 12 bits)",
+    FORMATO_S: "S  (almacenamiento en memoria)",
 }
 
 
@@ -64,6 +66,11 @@ def _detalle_campos(campos):
     return "\n\n".join(partes)
 
 
+def _operando_inmediato(valor):
+    """Los inmediatos negativos se muestran entre paréntesis: 'x1 + (-12)'."""
+    return f"({valor})" if valor < 0 else str(valor)
+
+
 def _resumen_semantico(p):
     """Frase que describe qué hace la instrucción con sus operandos."""
     d = p.definicion
@@ -72,6 +79,17 @@ def _resumen_semantico(p):
     if d.formato == FORMATO_R:
         simbolo = {"add": "+", "sub": "-", "and": "&", "or": "|"}[m]
         return f"x{p.rd} <- x{p.rs1} {simbolo} x{p.rs2}"
+
+    if d.formato == FORMATO_I:
+        if m in ("lw", "lb"):
+            ancho = "32 bits" if m == "lw" else "8 bits con extensión de signo"
+            return (f"x{p.rd} <- memoria[x{p.rs1} + ({p.imm})], leyendo {ancho}")
+        simbolo = {"addi": "+", "andi": "&"}[m]
+        return f"x{p.rd} <- x{p.rs1} {simbolo} {_operando_inmediato(p.imm)}"
+
+    if d.formato == FORMATO_S:
+        ancho = "la palabra de 32 bits" if m == "sw" else "el byte bajo"
+        return f"memoria[x{p.rs1} + ({p.imm})] <- {ancho} de x{p.rs2}"
 
     return ""
 

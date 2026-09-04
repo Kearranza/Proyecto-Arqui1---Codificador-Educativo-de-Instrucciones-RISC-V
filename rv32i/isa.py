@@ -6,10 +6,10 @@ Fuente de los valores de opcode / funct3 / funct7:
     "The RISC-V Instruction Set Manual, Volume I: Unprivileged ISA",
     Document Version 20191213, RISC-V Foundation, diciembre 2019.
     - Capítulo 2 "RV32I Base Integer Instruction Set", sección 2.2
-      ("Base Instruction Formats") para la disposición de campos del
-      formato R.
+      ("Base Instruction Formats") para la disposición de campos R/I/S.
     - Sección 2.4 ("Integer Computational Instructions") para add, sub,
-      and y or.
+      and, or, addi, andi.
+    - Sección 2.6 ("Load and Store Instructions") para lw, lb, sw, sb.
     - Capítulo 24 ("RV32/64G Instruction Set Listings"), tabla de opcodes,
       usada como verificación cruzada de los valores anteriores.
 
@@ -19,13 +19,24 @@ directamente contra la tabla del manual.
 
 # --- Opcodes (bits 6:0) -----------------------------------------------------
 OPCODE_OP = 0b0110011      # Aritmética registro-registro (formato R)
+OPCODE_OP_IMM = 0b0010011  # Aritmética con inmediato (formato I)
+OPCODE_LOAD = 0b0000011    # Cargas desde memoria (formato I)
+OPCODE_STORE = 0b0100011   # Almacenamientos en memoria (formato S)
 
 # --- Formatos ---------------------------------------------------------------
 FORMATO_R = "R"
+FORMATO_I = "I"
+FORMATO_S = "S"
 
 # Sintaxis de operandos que acepta el parser para cada instrucción:
 #   "rd_rs1_rs2"  ->  op rd, rs1, rs2          (add x5, x6, x7)
+#   "rd_rs1_imm"  ->  op rd, rs1, imm          (addi x5, x6, -12)
+#   "rd_off_rs1"  ->  op rd, imm(rs1)          (lw x5, 8(x6))
+#   "rs2_off_rs1" ->  op rs2, imm(rs1)         (sw x8, -4(x2))
 SINTAXIS_R = "rd_rs1_rs2"
+SINTAXIS_I_ARIT = "rd_rs1_imm"
+SINTAXIS_I_LOAD = "rd_off_rs1"
+SINTAXIS_S = "rs2_off_rs1"
 
 
 class DefInstruccion:
@@ -58,6 +69,31 @@ TABLA_ISA = {
                           SINTAXIS_R, "AND bit a bit de dos registros"),
     "or":  DefInstruccion("or",  FORMATO_R, OPCODE_OP, 0b110, 0b0000000,
                           SINTAXIS_R, "OR bit a bit de dos registros"),
+
+    # Aritmética con inmediato — formato I, opcode 0010011
+    "addi": DefInstruccion("addi", FORMATO_I, OPCODE_OP_IMM, 0b000, None,
+                           SINTAXIS_I_ARIT,
+                           "suma un inmediato de 12 bits con signo a un registro"),
+    "andi": DefInstruccion("andi", FORMATO_I, OPCODE_OP_IMM, 0b111, None,
+                           SINTAXIS_I_ARIT,
+                           "AND bit a bit entre un registro y un inmediato "
+                           "de 12 bits extendido con signo"),
+
+    # Cargas desde memoria — formato I, opcode 0000011
+    "lb": DefInstruccion("lb", FORMATO_I, OPCODE_LOAD, 0b000, None,
+                         SINTAXIS_I_LOAD,
+                         "carga un byte de memoria y lo extiende con signo a 32 bits"),
+    "lw": DefInstruccion("lw", FORMATO_I, OPCODE_LOAD, 0b010, None,
+                         SINTAXIS_I_LOAD,
+                         "carga una palabra de 32 bits desde memoria"),
+
+    # Almacenamiento en memoria — formato S, opcode 0100011
+    "sb": DefInstruccion("sb", FORMATO_S, OPCODE_STORE, 0b000, None,
+                         SINTAXIS_S,
+                         "almacena en memoria el byte menos significativo de un registro"),
+    "sw": DefInstruccion("sw", FORMATO_S, OPCODE_STORE, 0b010, None,
+                         SINTAXIS_S,
+                         "almacena en memoria la palabra de 32 bits de un registro"),
 }
 
 SOPORTADAS = list(TABLA_ISA.keys())
@@ -78,3 +114,7 @@ NOMBRES_ABI = {
     "t3": 28, "t4": 29, "t5": 30, "t6": 31,
 }
 
+# --- Rangos de inmediato ----------------------------------------------------
+# I y S: inmediato de 12 bits con signo.
+IMM_I_MIN, IMM_I_MAX = -2048, 2047
+IMM_S_MIN, IMM_S_MAX = -2048, 2047

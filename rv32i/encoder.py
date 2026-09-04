@@ -7,7 +7,7 @@ es la única fuente de verdad para el desglose visual: el explicador no
 vuelve a calcular posiciones, solo las presenta. Así es imposible que la
 codificación y la explicación se contradigan.
 """
-from .isa import FORMATO_R
+from .isa import FORMATO_R, FORMATO_I, FORMATO_S
 from .parser import ErrorInstruccion, parsear
 
 
@@ -36,6 +36,11 @@ class Campo:
         if self.bit_hi == self.bit_lo:
             return f"[{self.bit_hi}]"
         return f"[{self.bit_hi}:{self.bit_lo}]"
+
+
+def _a_complemento_dos(valor, bits):
+    """Representación en complemento a dos de 'valor' en 'bits' bits."""
+    return valor & ((1 << bits) - 1)
 
 
 def _campo(valor, bits):
@@ -76,8 +81,78 @@ def _codificar_r(p):
     return _ensamblar(campos), campos
 
 
+def _codificar_i(p):
+    d = p.definicion
+    imm12 = _a_complemento_dos(p.imm, 12)
+    es_carga = d.mnemonico in ("lw", "lb")
+
+    if es_carga:
+        explicacion_imm = (
+            f"Desplazamiento de 12 bits con signo: {p.imm}. La dirección "
+            f"efectiva de memoria es x{p.rs1} + ({p.imm}). Se extiende con "
+            f"signo a 32 bits antes de sumarse.")
+        explicacion_rs1 = f"Registro base de la dirección: x{p.rs1}."
+        explicacion_rd = f"Registro destino: x{p.rd}. Recibe el dato leído de memoria."
+    else:
+        explicacion_imm = (
+            f"Operando inmediato de 12 bits con signo: {p.imm}. Se extiende "
+            f"con signo a 32 bits antes de operar con x{p.rs1}.")
+        explicacion_rs1 = f"Registro fuente: x{p.rs1}."
+        explicacion_rd = f"Registro destino: x{p.rd}. Aquí se escribe el resultado."
+
+    if p.rd == 0:
+        explicacion_rd += " Como es x0, el resultado se descarta."
+
+    campos = [
+        Campo("imm[11:0]", 31, 20, imm12, explicacion_imm),
+        Campo("rs1", 19, 15, p.rs1, explicacion_rs1),
+        Campo("funct3", 14, 12, d.funct3,
+              f"Selector de operación dentro del opcode "
+              f"{format(d.opcode, '07b')}: identifica '{d.mnemonico}'."),
+        Campo("rd", 11, 7, p.rd, explicacion_rd),
+        Campo("opcode", 6, 0, d.opcode,
+              ("Identifica la familia de cargas desde memoria (LOAD) y, con "
+               "ello, el formato I.") if es_carga else
+              ("Identifica la familia de operaciones aritmético-lógicas con "
+               "inmediato (OP-IMM) y, con ello, el formato I.")),
+    ]
+    return _ensamblar(campos), campos
+
+
+def _codificar_s(p):
+    d = p.definicion
+    imm12 = _a_complemento_dos(p.imm, 12)
+    imm_alto = (imm12 >> 5) & 0x7F   # imm[11:5]
+    imm_bajo = imm12 & 0x1F          # imm[4:0]
+
+    campos = [
+        Campo("imm[11:5]", 31, 25, imm_alto,
+              f"Siete bits altos del desplazamiento. El inmediato completo es "
+              f"{p.imm}; se parte en dos trozos porque el formato S necesita "
+              f"dejar los bits 19:15 y 24:20 libres para rs1 y rs2, que están "
+              f"en la misma posición que en el formato R."),
+        Campo("rs2", 24, 20, p.rs2,
+              f"Registro cuyo contenido se escribe en memoria: x{p.rs2}."),
+        Campo("rs1", 19, 15, p.rs1,
+              f"Registro base de la dirección: x{p.rs1}."),
+        Campo("funct3", 14, 12, d.funct3,
+              f"Selector de operación dentro del opcode 0100011: determina el "
+              f"ancho del acceso ('{d.mnemonico}')."),
+        Campo("imm[4:0]", 11, 7, imm_bajo,
+              f"Cinco bits bajos del desplazamiento. Reunidos con imm[11:5] "
+              f"forman el valor de 12 bits con signo {p.imm}; la dirección "
+              f"efectiva es x{p.rs1} + ({p.imm})."),
+        Campo("opcode", 6, 0, d.opcode,
+              "Identifica la familia de almacenamientos en memoria (STORE) y, "
+              "con ello, el formato S."),
+    ]
+    return _ensamblar(campos), campos
+
+
 _DESPACHO = {
     FORMATO_R: _codificar_r,
+    FORMATO_I: _codificar_i,
+    FORMATO_S: _codificar_s,
 }
 
 
