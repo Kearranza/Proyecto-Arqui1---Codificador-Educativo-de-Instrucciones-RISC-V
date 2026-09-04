@@ -1,0 +1,73 @@
+# Casos de prueba propios para la validación contra el toolchain oficial.
+# Formato: <instruccion> ; <escenario>
+#
+# 12 instrucciones x 3 escenarios = 36 casos.
+# Estos casos son distintos de los de kit/vectores_ejemplo.txt.
+#
+# Escenarios por categoría:
+#   - Formato R (sin inmediato): registros bajos / uso de x0 / registros
+#     límite (x31), que ejercitan el campo de 5 bits en sus extremos.
+#   - Formatos I y S: inmediato positivo / inmediato negativo / inmediato
+#     en el límite representable (+2047 o -2048).
+#   - Formato B: desplazamiento positivo / negativo / caso límite
+#     (desplazamiento cero, o el máximo +4094).
+
+# --- add (R) ---
+add x5, x6, x7 ; positivo: registros bajos, caso base
+add x10, x0, x20 ; limite: rs1 = x0, la suma copia x20 en x10
+add x31, x31, x31 ; limite: los tres campos de registro en su valor maximo
+
+# --- sub (R) ---
+sub x8, x9, x10 ; positivo: registros bajos, caso base
+sub x5, x0, x7 ; negativo: x0 - x7 produce la negacion de x7
+sub x31, x30, x29 ; limite: registros altos, funct7 = 0100000
+
+# --- and (R) ---
+and x12, x13, x14 ; positivo: registros bajos, caso base
+and x0, x1, x2 ; limite: rd = x0, el resultado se descarta
+and x31, x0, x31 ; limite: rd y rs2 maximos, rs1 = x0
+
+# --- or (R) ---
+or x15, x16, x17 ; positivo: registros bajos, caso base
+or x6, x0, x0 ; limite: ambas fuentes son x0, resultado siempre cero
+or x31, x1, x31 ; limite: rd y rs2 en su valor maximo
+
+# --- addi (I) ---
+addi x5, x6, 100 ; positivo: inmediato pequeño positivo
+addi x7, x8, -100 ; negativo: exige complemento a dos en imm[11:0]
+addi x9, x10, 2047 ; limite: maximo inmediato positivo de 12 bits con signo
+
+# --- andi (I) ---
+andi x11, x12, 255 ; positivo: mascara de byte
+andi x13, x14, -256 ; negativo: mascara con extension de signo
+andi x15, x16, -2048 ; limite: minimo inmediato de 12 bits con signo
+
+# --- lw (I, carga) ---
+lw x1, 4(x2) ; positivo: desplazamiento pequeño respecto a la base
+lw x3, -8(x4) ; negativo: desplazamiento hacia atras
+lw x5, 2047(x6) ; limite: maximo desplazamiento positivo
+
+# --- lb (I, carga) ---
+lb x7, 16(x8) ; positivo: desplazamiento pequeño respecto a la base
+lb x9, -1(x10) ; negativo: desplazamiento -1, todos los bits del imm en 1
+lb x11, -2048(x12) ; limite: minimo desplazamiento representable
+
+# --- sw (S) ---
+sw x1, 12(x2) ; positivo: desplazamiento pequeño, parte imm en dos campos
+sw x3, -16(x4) ; negativo: complemento a dos repartido en imm[11:5] e imm[4:0]
+sw x5, 2047(x6) ; limite: maximo desplazamiento positivo
+
+# --- sb (S) ---
+sb x7, 3(x8) ; positivo: desplazamiento impar, valido en accesos de byte
+sb x9, -7(x10) ; negativo: desplazamiento negativo impar
+sb x11, -2048(x12) ; limite: minimo desplazamiento representable
+
+# --- beq (B) ---
+beq x1, x2, 16 ; positivo: salto hacia adelante
+beq x3, x4, -16 ; negativo: salto hacia atras, imm[12] = 1
+beq x5, x6, 0 ; limite: desplazamiento cero, todos los bits del imm en 0
+
+# --- bne (B) ---
+bne x7, x8, 32 ; positivo: salto hacia adelante
+bne x9, x10, -32 ; negativo: salto hacia atras, imm[12] = 1
+bne x11, x12, 4094 ; limite: maximo desplazamiento positivo del formato B

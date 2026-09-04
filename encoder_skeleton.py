@@ -66,11 +66,18 @@ def main():
         print(f"Error: {error}", file=sys.stderr)
         sys.exit(1)
 
-    print(salida)
+    try:
+        print(salida)
 
-    # No modificar el formato de la siguiente línea: la especificación
-    # la requiere, literal, para permitir la validación automática.
-    print(f"HEX: 0x{word:08x}")
+        # No modificar el formato de la siguiente línea: la especificación
+        # la requiere, literal, para permitir la validación automática.
+        print(f"HEX: 0x{word:08x}")
+        sys.stdout.flush()
+    except BrokenPipeError:
+        # Ocurre si la salida se trunca (p. ej. './run.sh "..." | head').
+        # No es un error de codificación, así que se termina en silencio.
+        os.dup2(os.open(os.devnull, os.O_WRONLY), sys.stdout.fileno())
+        sys.exit(0)
 
 
 if __name__ == "__main__":
