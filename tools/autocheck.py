@@ -9,8 +9,7 @@ la compara contra la codificación esperada.
 Uso:
     python3 tools/autocheck.py [ruta_vectores]
 
-Por omisión usa kit/vectores_ejemplo.txt. Termina con código 0 si todos
-los vectores coinciden, y 1 en caso contrario.
+Termina con código 0 si todos los vectores coinciden, y 1 en caso contrario.
 """
 import os
 import re

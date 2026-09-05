@@ -1,11 +1,6 @@
-"""
-Presentación de la instrucción codificada.
 
-Toma la palabra de 32 bits y la lista de campos producida por el
-codificador y genera el desglose visual: una tabla que muestra cada campo
-con su rango de bits y su valor binario, seguida de la explicación del rol
-de cada campo en esa instrucción concreta.
-"""
+#Presentación de la instrucción codificada.
+
 import textwrap
 
 from .isa import FORMATO_R, FORMATO_I, FORMATO_S, FORMATO_B
@@ -30,10 +25,10 @@ def _binario_agrupado(campos):
 
 
 def _tabla_campos(campos):
-    """
-    Construye la tabla ASCII de los campos. Las columnas se dimensionan
-    según el contenido, de modo que sirve igual para los cuatro formatos.
-    """
+    
+    #Construye la tabla ASCII de los campos. Las columnas se dimensionan
+    #según el contenido, de modo que sirve igual para los cuatro formatos.
+    
     celdas = []
     for campo in campos:
         rango = campo.rango
@@ -68,12 +63,11 @@ def _detalle_campos(campos):
 
 
 def _operando_inmediato(valor):
-    """Los inmediatos negativos se muestran entre paréntesis: 'x1 + (-12)'."""
     return f"({valor})" if valor < 0 else str(valor)
 
 
 def _resumen_semantico(p):
-    """Frase que describe qué hace la instrucción con sus operandos."""
+    #Frase que describe qué hace la instrucción con sus operandos.
     d = p.definicion
     m = d.mnemonico
 
@@ -101,7 +95,7 @@ def _resumen_semantico(p):
 
 
 def explicar(p, palabra, campos):
-    """Genera el texto completo de salida para una instrucción codificada."""
+    #Genera el texto completo de salida para una instrucción codificada.
     d = p.definicion
     binario_plano = format(palabra, "032b")
 

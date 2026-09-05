@@ -11,15 +11,6 @@ Para cada caso de casos_prueba.txt:
 Uso:
     python3 tools/validar_toolchain.py [ruta_casos]
 
-El prefijo del toolchain se detecta automáticamente. Si el suyo tiene otro
-nombre, indíquelo con la variable de entorno RISCV_PREFIX, por ejemplo:
-
-    RISCV_PREFIX=riscv64-unknown-elf- python3 tools/validar_toolchain.py
-
-Nota sobre los saltos: en sintaxis GNU el tercer operando de beq/bne es una
-dirección, no un desplazamiento. Para que el ensamblador produzca el
-desplazamiento que la herramienta codifica, este script emite los saltos
-como '.+N' / '.-N', donde '.' es la dirección de la propia instrucción.
 """
 import os
 import re
@@ -50,7 +41,7 @@ RE_SALTO = re.compile(r"^\s*(beq|bne)\b(.*),\s*([+-]?\w+)\s*$", re.IGNORECASE)
 
 
 def detectar_prefijo():
-    """Devuelve el prefijo del toolchain, o None si no se encuentra."""
+    #Devuelve el prefijo del toolchain, o None si no se encuentra.
     entorno = os.environ.get("RISCV_PREFIX")
     if entorno:
         if shutil.which(entorno + "as") and shutil.which(entorno + "objdump"):
@@ -80,11 +71,6 @@ def leer_casos(ruta):
 
 
 def a_sintaxis_gnu(instruccion):
-    """
-    Convierte el desplazamiento numérico de un salto a la forma '.+N',
-    que es como GNU as expresa un destino relativo a la instrucción actual.
-    Las demás instrucciones se emiten sin cambios.
-    """
     coincidencia = RE_SALTO.match(instruccion)
     if not coincidencia:
         return instruccion
@@ -97,7 +83,7 @@ def a_sintaxis_gnu(instruccion):
 
 
 def ensamblar(prefijo, casos, directorio):
-    """Ensambla todos los casos y devuelve la lista de palabras en hex."""
+    #Ensambla todos los casos y devuelve la lista de palabras en hex.
     ruta_s = os.path.join(directorio, "casos.s")
     ruta_o = os.path.join(directorio, "casos.o")
 
@@ -167,10 +153,10 @@ def escribir_evidencia(prefijo, filas, version_toolchain):
 
     with open(EVIDENCIA, "w", encoding="utf-8") as archivo:
         archivo.write("# Evidencia de validación contra el toolchain oficial\n\n")
-        archivo.write("Proyecto Individual — Codificador Educativo de "
+        archivo.write("Proyecto Individual - Codificador Educativo de "
                       "Instrucciones RISC-V\n")
         archivo.write("CE-4301 Arquitectura de Computadores I\n\n")
-        archivo.write("Kevin Carranza Blanco — carné 2020163275\n")
+        archivo.write("Kevin Carranza Blanco - carné 2020163275\n")
         archivo.write("Instituto Tecnológico de Costa Rica\n\n")
 
         archivo.write("## Entorno de validación\n\n")
@@ -207,7 +193,7 @@ def escribir_evidencia(prefijo, filas, version_toolchain):
             archivo.write("### Casos con discrepancia\n\n")
             for indice, fila in enumerate(filas, start=1):
                 if not fila["coincide"]:
-                    archivo.write(f"- Caso {indice}: `{fila['instruccion']}` — "
+                    archivo.write(f"- Caso {indice}: `{fila['instruccion']}` - "
                                   f"modelo `{fila['modelo']}`, referencia "
                                   f"`{fila['referencia']}`\n")
 

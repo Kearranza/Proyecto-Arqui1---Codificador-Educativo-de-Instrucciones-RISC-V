@@ -1,18 +1,12 @@
-"""
-Ensamblado de la palabra de 32 bits a partir de la instrucción parseada.
 
-Cada formato se codifica en una función independiente que devuelve, además
-de la palabra, la lista ordenada de campos con su rango de bits. Esa lista
-es la única fuente de verdad para el desglose visual: el explicador no
-vuelve a calcular posiciones, solo las presenta. Así es imposible que la
-codificación y la explicación se contradigan.
-"""
+#Ensamblado de la palabra de 32 bits a partir de la instrucción parseada.
+
 from .isa import FORMATO_R, FORMATO_I, FORMATO_S, FORMATO_B
 from .parser import ErrorInstruccion, parsear
 
 
 class Campo:
-    """Un campo de la instrucción: nombre, rango de bits y valor."""
+    #Un campo de la instrucción: nombre, rango de bits y valor.
 
     __slots__ = ("nombre", "bit_hi", "bit_lo", "valor", "explicacion")
 
@@ -39,17 +33,15 @@ class Campo:
 
 
 def _a_complemento_dos(valor, bits):
-    """Representación en complemento a dos de 'valor' en 'bits' bits."""
     return valor & ((1 << bits) - 1)
 
 
 def _campo(valor, bits):
-    """Recorta un valor al ancho de campo indicado."""
     return valor & ((1 << bits) - 1)
 
 
 def _ensamblar(campos):
-    """Combina los campos en la palabra de 32 bits."""
+    #Combina los campos en la palabra de 32 bits.
     palabra = 0
     for campo in campos:
         palabra |= _campo(campo.valor, campo.ancho) << campo.bit_lo

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
 Codificador Educativo de Instrucciones RISC-V.
-CE-4301 Arquitectura de Computadores I — Proyecto Individual — 2026-II
+CE-4301 Arquitectura de Computadores I - Proyecto Individual - 2026-II
 
-Autor: Kevin Carranza Blanco (carné 2020163275)
+Autor: Kevin Carranza Blanco (carnet 2020163275)
 Instituto Tecnológico de Costa Rica
 
 Punto de entrada de la herramienta. Conserva el contrato de invocación y de
@@ -38,8 +38,8 @@ def encode_instruction(instruction: str) -> int:
 def explain_instruction(instruction: str, word: int) -> str:
     """
     Retorna el texto que muestra los 32 bits de 'word' divididos en los
-    campos del formato correspondiente (R, I, S o B) — con el rango de bits
-    y el valor de cada campo — junto con la explicación de cada uno.
+    campos del formato correspondiente (R, I, S o B) - con el rango de bits
+    y el valor de cada campo - junto con la explicación de cada uno.
     """
     parseada = parsear(instruction)
     _palabra, campos = codificar_parseada(parseada)

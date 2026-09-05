@@ -1,12 +1,6 @@
-"""
-Parseo de una instrucción en texto ensamblador a una estructura intermedia.
 
-El parser es deliberadamente tolerante en la forma (espacios, comas
-opcionales, mayúsculas, comentarios) y estricto en el fondo (mnemónico
-soportado, número de operandos, registros válidos, inmediato en rango).
-Así la herramienta generaliza a cualquier instrucción del subconjunto sin
-aceptar entradas que no tengan una codificación bien definida.
-"""
+#Parseo de una instrucción en texto ensamblador a una estructura intermedia.
+
 import re
 
 from .isa import (
@@ -39,7 +33,7 @@ _RE_REGISTRO_X = re.compile(r"^x(\d+)$")
 
 
 def _limpiar(texto):
-    """Elimina comentarios (# o //) y normaliza los espacios en blanco."""
+    #Elimina comentarios (# o //) y normaliza los espacios en blanco.
     if not isinstance(texto, str):
         raise ErrorInstruccion("la instrucción debe ser una cadena de texto")
     sin_comentario = re.split(r"#|//", texto, maxsplit=1)[0]
@@ -47,10 +41,8 @@ def _limpiar(texto):
 
 
 def _partir_operandos(resto):
-    """
-    Separa los operandos. Las comas son el separador natural, pero también
-    se acepta separación solo por espacios ("add x5 x6 x7").
-    """
+    #Separa los operandos. Las comas son el separador natural, pero también
+    #se acepta separación solo por espacios ("add x5 x6 x7").
     if not resto:
         return []
     if "," in resto:
@@ -61,7 +53,7 @@ def _partir_operandos(resto):
 
 
 def parsear_registro(token):
-    """Convierte 'x13', 'X13' o un nombre ABI ('sp', 't0') en su número."""
+    #Convierte 'x13', 'X13' o un nombre ABI ('sp', 't0') en su número.
     original = token
     token = token.strip().lower()
     if token == "":
@@ -84,10 +76,10 @@ def parsear_registro(token):
 
 
 def parsear_inmediato(token):
-    """
-    Convierte el inmediato a entero. Acepta decimal con signo, hexadecimal
-    (0x), binario (0b) y octal (0o).
-    """
+
+    #Convierte el inmediato a entero. Acepta decimal con signo, hexadecimal
+    #(0x), binario (0b).
+
     original = token
     token = token.strip().lower().replace("_", "")
     if token == "":
@@ -118,7 +110,7 @@ def parsear_inmediato(token):
 
 
 def _verificar_rango(definicion, valor):
-    """Valida el inmediato contra el rango que permite el formato."""
+    #Valida el inmediato contra el rango que permite el formato.
     from .isa import (FORMATO_I, FORMATO_S, FORMATO_B,
                       IMM_I_MIN, IMM_I_MAX, IMM_S_MIN, IMM_S_MAX,
                       IMM_B_MIN, IMM_B_MAX)
@@ -145,7 +137,7 @@ def _verificar_rango(definicion, valor):
 
 
 def _parsear_offset(token):
-    """Parsea la forma 'imm(rs1)' propia de cargas y almacenamientos."""
+    #Parsea la forma 'imm(rs1)' propia de cargas y almacenamientos.
     coincidencia = _RE_OFFSET.match(token)
     if not coincidencia:
         raise ErrorInstruccion(
@@ -164,11 +156,9 @@ def _exigir_cantidad(mnemonico, operandos, esperados, ejemplo):
 
 
 def parsear(texto):
-    """
-    Parsea una instrucción completa y devuelve una InstruccionParseada.
-    Lanza ErrorInstruccion con un mensaje explicativo si la entrada no es
-    una instrucción válida del subconjunto soportado.
-    """
+
+    #Parsea una instrucción completa y devuelve una InstruccionParseada.
+
     limpio = _limpiar(texto)
     if limpio == "":
         raise ErrorInstruccion("no se recibió ninguna instrucción")

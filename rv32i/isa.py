@@ -1,22 +1,6 @@
-"""
-Tablas de codificación del subconjunto RV32I soportado.
 
-Fuente de los valores de opcode / funct3 / funct7:
-    Andrew Waterman, Krste Asanović (eds.),
-    "The RISC-V Instruction Set Manual, Volume I: Unprivileged ISA",
-    Document Version 20191213, RISC-V Foundation, diciembre 2019.
-    - Capítulo 2 "RV32I Base Integer Instruction Set", sección 2.2
-      ("Base Instruction Formats") para la disposición de campos R/I/S/B.
-    - Sección 2.4 ("Integer Computational Instructions") para add, sub,
-      and, or, addi, andi.
-    - Sección 2.6 ("Load and Store Instructions") para lw, lb, sw, sb.
-    - Sección 2.5 ("Control Transfer Instructions") para beq, bne.
-    - Capítulo 24 ("RV32/64G Instruction Set Listings"), tabla de opcodes,
-      usada como verificación cruzada de los valores anteriores.
+#Tablas de codificación del subconjunto RV32I soportado.
 
-Todos los valores se escriben aquí en binario para que puedan contrastarse
-directamente contra la tabla del manual.
-"""
 
 # --- Opcodes (bits 6:0) -----------------------------------------------------
 OPCODE_OP = 0b0110011      # Aritmética registro-registro (formato R)
@@ -45,7 +29,7 @@ SINTAXIS_B = "rs1_rs2_imm"
 
 
 class DefInstruccion:
-    """Descriptor estático de una instrucción del subconjunto soportado."""
+    #Descriptor estático de una instrucción del subconjunto soportado.
 
     __slots__ = ("mnemonico", "formato", "opcode", "funct3", "funct7",
                  "sintaxis", "descripcion")
@@ -65,7 +49,7 @@ class DefInstruccion:
 # Agregar una instrucción del subconjunto es añadir una fila aquí; el resto
 # del programa (parser, codificador y explicador) es genérico por formato.
 TABLA_ISA = {
-    # Aritmética registro-registro — formato R, opcode 0110011
+    # Aritmética registro-registro - formato R, opcode 0110011
     "add": DefInstruccion("add", FORMATO_R, OPCODE_OP, 0b000, 0b0000000,
                           SINTAXIS_R, "suma con signo de dos registros"),
     "sub": DefInstruccion("sub", FORMATO_R, OPCODE_OP, 0b000, 0b0100000,
@@ -75,7 +59,7 @@ TABLA_ISA = {
     "or":  DefInstruccion("or",  FORMATO_R, OPCODE_OP, 0b110, 0b0000000,
                           SINTAXIS_R, "OR bit a bit de dos registros"),
 
-    # Aritmética con inmediato — formato I, opcode 0010011
+    # Aritmética con inmediato - formato I, opcode 0010011
     "addi": DefInstruccion("addi", FORMATO_I, OPCODE_OP_IMM, 0b000, None,
                            SINTAXIS_I_ARIT,
                            "suma un inmediato de 12 bits con signo a un registro"),
@@ -84,7 +68,7 @@ TABLA_ISA = {
                            "AND bit a bit entre un registro y un inmediato "
                            "de 12 bits extendido con signo"),
 
-    # Cargas desde memoria — formato I, opcode 0000011
+    # Cargas desde memoria - formato I, opcode 0000011
     "lb": DefInstruccion("lb", FORMATO_I, OPCODE_LOAD, 0b000, None,
                          SINTAXIS_I_LOAD,
                          "carga un byte de memoria y lo extiende con signo a 32 bits"),
@@ -92,7 +76,7 @@ TABLA_ISA = {
                          SINTAXIS_I_LOAD,
                          "carga una palabra de 32 bits desde memoria"),
 
-    # Almacenamiento en memoria — formato S, opcode 0100011
+    # Almacenamiento en memoria - formato S, opcode 0100011
     "sb": DefInstruccion("sb", FORMATO_S, OPCODE_STORE, 0b000, None,
                          SINTAXIS_S,
                          "almacena en memoria el byte menos significativo de un registro"),
@@ -100,7 +84,7 @@ TABLA_ISA = {
                          SINTAXIS_S,
                          "almacena en memoria la palabra de 32 bits de un registro"),
 
-    # Saltos condicionales — formato B, opcode 1100011
+    # Saltos condicionales - formato B, opcode 1100011
     "beq": DefInstruccion("beq", FORMATO_B, OPCODE_BRANCH, 0b000, None,
                           SINTAXIS_B,
                           "salta si los dos registros son iguales"),
